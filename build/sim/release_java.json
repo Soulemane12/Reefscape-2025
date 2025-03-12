@@ -1,0 +1,21 @@
+[
+  {
+    "type": "java",
+    "name": "jar (in project Reef)",
+    "extensions": [
+      {
+        "name": "Sim GUI",
+        "libName": "/Users/soulemanesow/Downloads/Robot/Reef/build/jni/release/libhalsim_gui.dylib",
+        "defaultEnabled": true
+      },
+      {
+        "name": "Use Real DriverStation",
+        "libName": "/Users/soulemanesow/Downloads/Robot/Reef/build/jni/release/libhalsim_ds_socket.dylib",
+        "defaultEnabled": false
+      }
+    ],
+    "environment": {},
+    "libraryDir": "/Users/soulemanesow/Downloads/Robot/Reef/build/jni/release",
+    "mainClassName": "frc.robot.Main"
+  }
+]
