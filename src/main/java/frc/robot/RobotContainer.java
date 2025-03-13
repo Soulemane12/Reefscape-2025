@@ -271,7 +271,10 @@ public class RobotContainer {
         operator.rightTrigger().whileTrue(shooter.shooterIntakeControl());
         operator.leftTrigger().whileTrue(shooter.shooterOutakeControl());
 
-;
+        //Climber Control
+        operator.rightBumper().whileTrue(m_climber.climberForwardControl());
+        operator.leftBumper().whileTrue(m_climber.climberReverseControl());
+
         drivetrain.registerTelemetry(logger::telemeterize);
     }
 

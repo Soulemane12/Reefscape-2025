@@ -15,26 +15,46 @@ public class Climber extends SubsystemBase {
   /** Creates a new Climber. */
   private final TalonFX m_climberMotor;
   private final DutyCycleOut m_climberRequest;
+  private final DutyCycleOut m_reverseRequest;
   private final DutyCycleOut zeroRequest;
 
   public Climber() {
-    m_climberMotor = new TalonFX(56, "ChooChooTrain");
+    m_climberMotor = new TalonFX(70, "ChooChooTrain");
     m_climberRequest = new DutyCycleOut(1.0);
+    m_reverseRequest = new DutyCycleOut(-1.0);
     zeroRequest = new DutyCycleOut(0);
   }
 
-  public void runClimber(){
+  public void runClimberForward() {
     m_climberMotor.setControl(m_climberRequest);
   }
 
-  public Command climberControl(){
+  public void runClimberReverse() {
+    m_climberMotor.setControl(m_reverseRequest);
+  }
+
+  public void stopClimber() {
+    m_climberMotor.setControl(zeroRequest);
+  }
+
+  public Command climberForwardControl() {
     return this.startEnd(
       () -> {
         m_climberMotor.setControl(m_climberRequest);
       }, 
       () -> {
         m_climberMotor.setControl(zeroRequest);
-  });
+      });
+  }
+
+  public Command climberReverseControl() {
+    return this.startEnd(
+      () -> {
+        m_climberMotor.setControl(m_reverseRequest);
+      }, 
+      () -> {
+        m_climberMotor.setControl(zeroRequest);
+      });
   }
 
   @Override
