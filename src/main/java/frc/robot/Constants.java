@@ -25,7 +25,7 @@ public final class Constants {
 
     // Setpoints - These are the target positions relative to the AprilTag
     // You'll need to adjust these based on where you want the robot to stop
-    public static final double X_SETPOINT_REEF_ALIGNMENT = -0.5;  // Distance in front of tag (meters)
+    public static final double X_SETPOINT_REEF_ALIGNMENT = -0.1;  // Distance in front of tag (meters)
     public static final double Y_SETPOINT_REEF_ALIGNMENT = 0.19;  // Side offset from tag (meters)
     public static final double ROT_SETPOINT_REEF_ALIGNMENT = 0;   // Angle relative to tag (degrees)
 
@@ -44,10 +44,10 @@ public final class Constants {
     public static final int kElevatorMotorID2 = 21;
 
     // Elevator positions
-    public static final double kElevatorL0Position = 0.25;  // Point 0 position
-    public static final double kElevatorL2Position = 0.8;   // L2 position
-    public static final double kElevatorL3Position = 1.95;   // L3 position
-    public static final double kElevatorL4Position = 3.9;   // L4 position
+    public static final double kElevatorL0Position = 0.25;  // 0 position
+    public static final double kElevatorL2Position = .9;   // L2 position
+    public static final double kElevatorL3Position = 2.2;  // L3 position
+    public static final double kElevatorL4Position = 3;   // L4 position
   }
   public static class ShooterConstants{
     public static final int kShooterMotorID = 30;
@@ -56,11 +56,10 @@ public final class Constants {
     public static final int kPivotMotorID = 30;  // Same as ShooterMotorID
 
     // Pivot positions in radians
-    public static final double kPivotL0Position = 0.75;     // L0 position
-    public static final double kPivotL2Position = -0.7;    // L2 position
-    public static final double kPivotL3Position = -0.7;     // L3 position
-    public static final double kPivotL4Position = -0.525;     // L4 position
-    public static final double kPivotInPosition = -1;    // In position
-    public static final double kPivotParallelPosition = -2.1;  // Parallel to ground
+    public static final double kPivotInPosition = 0.05;    // Zero position
+    public static final double kPivotIntakePosition = -1.6;  // Intake position
+    public static final double kPivotL2Position = -.5;    // L2 position
+    public static final double kPivotL3Position = -.5;     // L3 position
+    public static final double kPivotL4Position = -1.4;     // L4 position
   }
 }

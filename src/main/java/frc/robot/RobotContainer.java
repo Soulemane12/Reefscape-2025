@@ -36,6 +36,7 @@ import frc.robot.commands.AlignToReefTagRelative;
 
 import frc.robot.commands.elevator.ElevatorPositionCommandBase;
 import frc.robot.Constants.PivotConstants;
+import frc.robot.commands.DriveToHigherTag;
 
 public class RobotContainer {
 
@@ -44,7 +45,7 @@ public class RobotContainer {
 
     /* Setting up bindings for necessary control of the swerve drive platform */
     private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
-            .withDeadband(MaxSpeed * 0.1).withRotationalDeadband(MaxAngularRate * 0.1) // Reduce deadband to 5%
+            .withDeadband(MaxSpeed * 0.08).withRotationalDeadband(MaxAngularRate * 0.1) // Reduce deadband to 5%
             .withDriveRequestType(DriveRequestType.OpenLoopVoltage); // Use open-loop control for drive motors
     private final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
     private final SwerveRequest.PointWheelsAt point = new SwerveRequest.PointWheelsAt();
@@ -64,7 +65,7 @@ public class RobotContainer {
 
     private final MotionMagicVoltage m_request = new MotionMagicVoltage(0);
     private final double kElevatorGravityCompensation = 0.04;
-    private final double kPositionGravityCompensation = 0.5; // Increased gravity compensation
+    private final double kPositionGravityCompensation = -0.6; // Increased gravity compensation
 
     private final SendableChooser<Command> autoChooser;
 
@@ -80,7 +81,7 @@ public class RobotContainer {
 
     private final PivotSetPositionCommand m_pivotTo0;
     private final PivotSetPositionCommand m_pivotToL4;
-    private final PivotSetPositionCommand m_pivotToParallel;
+    private final PivotSetPositionCommand m_pivotToIntake;
     private final PivotSetPositionCommand m_pivotToIN;
 
     private final MotionMagicVoltage pivotRequest;
@@ -115,19 +116,19 @@ public class RobotContainer {
 
         // Compute the adjusted setpoints with gravity compensation
         double adjustedL2 = PivotConstants.kPivotL2Position + 
-            (kPositionGravityCompensation * Math.sin(PivotConstants.kPivotL2Position));
+            ((kPositionGravityCompensation+1.7) * Math.sin(PivotConstants.kPivotL2Position));
         
         double adjustedL3 = PivotConstants.kPivotL3Position + 
-            (kPositionGravityCompensation * Math.sin(PivotConstants.kPivotL3Position));
+            ((kPositionGravityCompensation+1.7) * Math.sin(PivotConstants.kPivotL3Position));
         
-        double adjustedL0 = PivotConstants.kPivotL0Position + 
-            (kPositionGravityCompensation * Math.sin(PivotConstants.kPivotL0Position));
+        double adjustedL0 = PivotConstants.kPivotInPosition + 
+            (kPositionGravityCompensation * Math.sin(PivotConstants.kPivotInPosition));
         
         double adjustedL4 = PivotConstants.kPivotL4Position + 
             (kPositionGravityCompensation * Math.sin(PivotConstants.kPivotL4Position));
         
-        double adjustedParallel = PivotConstants.kPivotParallelPosition + 
-            (kPositionGravityCompensation * Math.sin(PivotConstants.kPivotParallelPosition));
+        double adjustedParallel = PivotConstants.kPivotIntakePosition + 
+            ((kPositionGravityCompensation +1.7)* Math.sin(PivotConstants.kPivotIntakePosition));
         
         double adjustedin = PivotConstants.kPivotInPosition + 
             (kPositionGravityCompensation * Math.sin(PivotConstants.kPivotInPosition));
@@ -137,8 +138,8 @@ public class RobotContainer {
         m_pivotToL3 = new PivotSetPositionCommand(m_Pivot, m_request, adjustedL3);
 
         m_pivotTo0   = new PivotSetPositionCommand(m_Pivot, m_request, adjustedL0);
-        m_pivotToL4   = new PivotSetPositionCommand(m_Pivot, m_request, adjustedL4);
-        m_pivotToParallel = new PivotSetPositionCommand(m_Pivot, m_request, adjustedParallel);
+        m_pivotToL4   = new PivotSetPositionCommand(m_Pivot, pivotRequest, adjustedL4);
+        m_pivotToIntake = new PivotSetPositionCommand(m_Pivot, m_request, adjustedParallel);
      
         m_pivotToIN = new PivotSetPositionCommand(m_Pivot, m_request, adjustedin);
 
@@ -174,10 +175,16 @@ public class RobotContainer {
         ));
 
         driver.pov(0).whileTrue(drivetrain.applyRequest(() ->
-            forwardStraight.withVelocityX(0.10).withVelocityY(0))
+            forwardStraight.withVelocityX(0.30).withVelocityY(0))
         );
         driver.pov(180).whileTrue(drivetrain.applyRequest(() ->
-            forwardStraight.withVelocityX(-0.10).withVelocityY(0))
+            forwardStraight.withVelocityX(-0.30).withVelocityY(0))
+        );
+        driver.pov(270).whileTrue(drivetrain.applyRequest(() ->
+            forwardStraight.withVelocityX(0).withVelocityY(0.30))
+        );
+        driver.pov(90).whileTrue(drivetrain.applyRequest(() ->
+            forwardStraight.withVelocityX(0).withVelocityY(-0.30))
         );
 
         // Run SysId routines when holding back/start and X/Y.
@@ -190,61 +197,81 @@ public class RobotContainer {
         // reset the field-centric heading on left bumper press
         driver.x().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric()));
 
-        driver.rightTrigger().whileTrue(new RunCommand(() -> shooter.shoot(1.0), shooter))
-                                .onFalse(new InstantCommand(() -> shooter.shoot(0.0), shooter));
-
-        m_Pivot.setDefaultCommand(
-            new PositionJoystickCommand(m_Pivot, driver, kPositionGravityCompensation)
-        );
-
-     
-        
         // Parallel-Elevator-Pivot sequences
 
          
         operator.pov(180).onTrue(
-            Commands.parallel(
-                new ElevatorTo0Position(),
-                new PivotSetPositionCommand(m_Pivot, pivotRequest, -0.10)
+            Commands.sequence(
+                new ElevatorTo0Position()
             )
         );
 
         operator.pov(0).onTrue(
             Commands.sequence(
-                new PivotSetPositionCommand(m_Pivot, pivotRequest, PivotConstants.kPivotInPosition),
-                Commands.waitSeconds(0.5),
-                new ElevatorTo0Position()
+                new PivotSetPositionCommand(m_Pivot, pivotRequest, PivotConstants.kPivotInPosition)
             )
         );
 
         
 
         operator.a().onTrue(Commands.sequence(
+            m_elevatorToL2Position.withTimeout(.2),
             m_pivotToL2,
-            Commands.waitSeconds(0.5),
-            m_elevatorToL2Position
+            Commands.waitSeconds(999)
+
         ));
         operator.b().onTrue(Commands.sequence(
-            m_pivotToL3.until(() -> Math.abs(m_Pivot.getCurrentPosition() - PivotConstants.kPivotL3Position) < 0.1),
-            Commands.waitSeconds(0.5),
-            m_elevatorToL3Position
+  
+           m_elevatorToL3Position.withTimeout(.33),
+           m_pivotToL3,
+           Commands.waitSeconds(999)
+            
         ));
         operator.y().onTrue(Commands.sequence(
+
+            m_elevatorToL4Position.withTimeout(.95),
             m_pivotToL4,
-            Commands.waitSeconds(0.5),
-            m_elevatorToL4Position
+            Commands.waitSeconds(999)
+   
+        ));
+
+        /*operator.x().onTrue(
+            Commands.either(
+            Commands.sequence(
+                m_pivotToIntake
+                ),
+            Commands.sequence(
+            m_pivotToIN,
+            Commands.waitSeconds(0.2),
+            m_elevatorTo0Position,
+            Commands.waitUntil(() -> m_elevator.getPosition() <=.011),
+            m_pivotToIntake
+            ),
+            () -> m_elevator.getPosition() <= 0.011
+        )
+        );*/
+        operator.x().onTrue(Commands.sequence(
+        m_elevatorTo0Position.withTimeout(0.01),
+        m_pivotToIntake,
+        Commands.waitSeconds(999)
+
+
+
         ));
         
      
         // Right bumper for right reef alignment, left bumper for left reef alignment
         driver.rightBumper().whileTrue(new AlignToReefTagRelative(true, drivetrain));
         driver.leftBumper().whileTrue(new AlignToReefTagRelative(false, drivetrain));
+        
+        // Y button for driving to and centering with a higher AprilTag
+        driver.y().whileTrue(new DriveToHigherTag(drivetrain));
 
         //Shooter Control
         operator.rightTrigger().whileTrue(shooter.shooterIntakeControl());
-        operator.leftTrigger().onTrue(shooter.shooterOutakeControl().withTimeout(0.75));
+        operator.leftTrigger().whileTrue(shooter.shooterOutakeControl());
 
-
+;
         drivetrain.registerTelemetry(logger::telemeterize);
     }
 

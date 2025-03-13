@@ -19,13 +19,13 @@ public class PivotSetPositionCommand extends Command {
 
     @Override
     public void initialize() {
-        m_pivot.setShooterPosition(m_targetPosition);
+        m_pivot.setPositionWithRequest(m_request.withPosition(m_targetPosition));
     }
 
     @Override
     public void execute() {
         // Keep setting position to hold it
-        m_pivot.setShooterPosition(m_targetPosition);
+        m_pivot.setPositionWithRequest(m_request.withPosition(m_targetPosition));
     }
 
     @Override

@@ -62,13 +62,38 @@ public class Pivot extends SubsystemBase {
         m_motor.setNeutralMode(NeutralModeValue.Brake);
         m_motor.setControl(new MotionMagicVoltage(adjustedTarget));
         lastTargetPosition = adjustedTarget;
+        
+        // Log for debugging
+        SmartDashboard.putNumber("Pivot Target Position", adjustedTarget);
+        SmartDashboard.putString("Pivot Control Method", "Using Standard Method");
+    }
+
+    /**
+     * Moves the shooter motor to a specific position using the provided MotionMagicVoltage request.
+     * @param request The MotionMagicVoltage request to use
+     * @param targetPosition The target position in rotations.
+     */
+    public void setPositionWithRequest(MotionMagicVoltage request) {
+        m_motor.setNeutralMode(NeutralModeValue.Brake);
+        m_motor.setControl(request);
+        lastTargetPosition = request.Position;
+        
+        // Log for debugging
+        SmartDashboard.putNumber("Pivot Target Position", request.Position);
+        SmartDashboard.putString("Pivot Control Method", "Using Request Object");
     }
 
     /**
      * Holds the last known position to prevent drifting.
      */
     public void holdPosition() {
-        setShooterPosition(lastTargetPosition);
+        // Use the new method with a fresh request
+        setPositionWithRequest(new MotionMagicVoltage(lastTargetPosition)
+            .withSlot(0)
+            .withEnableFOC(true));
+        
+        // Log that we're holding position
+        System.out.println("Holding pivot position at: " + lastTargetPosition);
     }
 
     /**
