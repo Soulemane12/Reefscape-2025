@@ -1,0 +1,20 @@
+# Ignore large files and build artifacts
+*.mp4
+*.zip
+*.tar
+*.gz
+*.rar
+*.7z
+*.iso
+*.hoot
+*.pdb
+bin/
+.gradle/
+builds/
+ctre_sim/
+build/
+logs/
+networktables.json
+simgui.json
+simgui-*.json
+.DS_Store
