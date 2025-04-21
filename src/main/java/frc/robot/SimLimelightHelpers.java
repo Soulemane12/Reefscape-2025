@@ -11,6 +11,8 @@ import edu.wpi.first.networktables.DoubleArrayPublisher;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StringPublisher;
+import edu.wpi.first.wpilibj.RobotState;
+import frc.robot.subsystems.CommandSwerveDrivetrain;
 
 /**
  * A simulation-specific implementation of LimelightHelpers that provides
@@ -32,6 +34,30 @@ public class SimLimelightHelpers {
     
     // Simulated target ID
     private static int targetId = 1;
+
+    // Camera position relative to robot center (in meters)
+    private static final double CAMERA_X = 0.0; // Centered on robot
+    private static final double CAMERA_Y = 0.0; // Centered on robot
+    private static final double CAMERA_Z = 0.5; // 0.5 meters above robot center
+    
+    // AprilTag positions on the field (in meters)
+    private static final Pose3d LEFT_REEF_TAG = new Pose3d(2.0, 2.0, 0.0, new Rotation3d());
+    private static final Pose3d RIGHT_REEF_TAG = new Pose3d(2.0, -2.0, 0.0, new Rotation3d());
+    private static final Pose3d HIGHER_TAG = new Pose3d(3.0, 0.0, 1.0, new Rotation3d());
+    
+    // Field of view parameters (in degrees)
+    private static final double HORIZONTAL_FOV = 59.6;
+    private static final double VERTICAL_FOV = 45.7;
+    
+    // Reference to drivetrain for getting robot pose
+    private static CommandSwerveDrivetrain drivetrain;
+    
+    /**
+     * Sets the drivetrain reference for getting robot pose
+     */
+    public static void setDrivetrain(CommandSwerveDrivetrain dt) {
+        drivetrain = dt;
+    }
     
     /**
      * Sets whether a target is visible in the simulated Limelight
@@ -50,12 +76,78 @@ public class SimLimelightHelpers {
     }
     
     /**
+     * Checks if a target is within the camera's field of view
+     * @param targetPose The target's pose in field space
+     * @param robotPose The robot's pose in field space
+     * @return Whether the target is visible
+     */
+    private static boolean isTargetInFOV(Pose3d targetPose, Pose2d robotPose) {
+        // Calculate relative position of target to robot
+        Translation3d relativePos = targetPose.getTranslation().minus(
+            new Translation3d(robotPose.getX(), robotPose.getY(), CAMERA_Z)
+        );
+        
+        // Convert to camera space (accounting for robot rotation)
+        double robotAngle = robotPose.getRotation().getRadians();
+        double dx = relativePos.getX() * Math.cos(-robotAngle) - relativePos.getY() * Math.sin(-robotAngle);
+        double dy = relativePos.getX() * Math.sin(-robotAngle) + relativePos.getY() * Math.cos(-robotAngle);
+        double dz = relativePos.getZ();
+        
+        // Calculate angles from camera to target
+        double horizontalAngle = Math.toDegrees(Math.atan2(dx, Math.sqrt(dy * dy + dz * dz)));
+        double verticalAngle = Math.toDegrees(Math.atan2(dy, Math.sqrt(dx * dx + dz * dz)));
+        
+        // Check if target is within FOV
+        return Math.abs(horizontalAngle) <= HORIZONTAL_FOV / 2 && 
+               Math.abs(verticalAngle) <= VERTICAL_FOV / 2;
+    }
+    
+    /**
+     * Gets the target pose based on the current target ID
+     * @return The target's pose in field space
+     */
+    private static Pose3d getTargetPose() {
+        switch (targetId) {
+            case 1: // Left reef tag
+                return LEFT_REEF_TAG;
+            case 2: // Right reef tag
+                return RIGHT_REEF_TAG;
+            case 3: // Higher tag
+                return HIGHER_TAG;
+            default:
+                return LEFT_REEF_TAG; // Default to left reef tag
+        }
+    }
+    
+    /**
      * Simulates the getTV() function from LimelightHelpers
      * @param limelightName The name of the Limelight (ignored in simulation)
      * @return Whether a target is visible
      */
     public static boolean getTV(String limelightName) {
-        return targetVisible;
+        if (!targetVisible) {
+            return false;
+        }
+        
+        // Get the robot's current pose
+        Pose2d robotPose = getRobotPose();
+        
+        // Get the target pose
+        Pose3d targetPose = getTargetPose();
+        
+        // Check if target is in field of view
+        return isTargetInFOV(targetPose, robotPose);
+    }
+    
+    /**
+     * Gets the robot's current pose from the drivetrain
+     * @return The robot's current pose
+     */
+    private static Pose2d getRobotPose() {
+        if (drivetrain != null) {
+            return drivetrain.getState().Pose;
+        }
+        return new Pose2d(); // Default pose if drivetrain not set
     }
     
     /**
@@ -65,44 +157,23 @@ public class SimLimelightHelpers {
      */
     public static double[] getBotPose(String limelightName) {
         // Default pose if no target is visible
-        if (!targetVisible) {
+        if (!getTV(limelightName)) {
             return new double[]{0, 0, 0, 0, 0, 0};
         }
         
-        // Simulate a pose based on the target ID
-        // This is just an example - you can modify this to provide different poses
-        double x = 0;
-        double y = 0;
-        double z = 0;
-        double roll = 0;
-        double pitch = 0;
-        double yaw = 0;
+        // Get the robot's current pose
+        Pose2d robotPose = getRobotPose();
         
-        switch (targetId) {
-            case 1: // Left reef tag
-                x = 2.0;
-                y = 2.0;
-                yaw = 45;
-                break;
-            case 2: // Right reef tag
-                x = 2.0;
-                y = -2.0;
-                yaw = -45;
-                break;
-            case 3: // Higher tag
-                x = 3.0;
-                y = 0.0;
-                yaw = 0;
-                break;
-            default:
-                // Default pose
-                x = 1.0;
-                y = 1.0;
-                yaw = 30;
-                break;
-        }
+        // Convert to the format expected by Limelight
+        double[] pose = new double[6];
+        pose[0] = robotPose.getX(); // X position
+        pose[1] = robotPose.getY(); // Y position
+        pose[2] = CAMERA_Z; // Z position (height of camera)
+        pose[3] = 0; // Roll (assuming no roll)
+        pose[4] = 0; // Pitch (assuming no pitch)
+        pose[5] = robotPose.getRotation().getDegrees(); // Yaw
         
-        double[] pose = {x, y, z, roll, pitch, yaw};
+        // Publish to NetworkTables
         botposePub.set(pose);
         return pose;
     }
@@ -136,7 +207,7 @@ public class SimLimelightHelpers {
      */
     public static double[] getCameraPose_RobotSpace(String limelightName) {
         // Simulate camera position relative to robot
-        double[] pose = {0.5, 0, 0.5, 0, 0, 0};
+        double[] pose = {CAMERA_X, CAMERA_Y, CAMERA_Z, 0, 0, 0};
         camerapose_robotspacePub.set(pose);
         return pose;
     }
@@ -147,11 +218,7 @@ public class SimLimelightHelpers {
      * @return The robot's 2D pose in field space
      */
     public static Pose2d getBotPose2d(String limelightName) {
-        double[] poseArray = getBotPose(limelightName);
-        return new Pose2d(
-            new Translation2d(poseArray[0], poseArray[1]),
-            Rotation2d.fromDegrees(poseArray[5])
-        );
+        return getRobotPose();
     }
     
     /**
@@ -160,11 +227,7 @@ public class SimLimelightHelpers {
      * @return The robot's 2D pose in field space for the blue alliance
      */
     public static Pose2d getBotPose2d_wpiBlue(String limelightName) {
-        double[] poseArray = getBotPose_wpiBlue(limelightName);
-        return new Pose2d(
-            new Translation2d(poseArray[0], poseArray[1]),
-            Rotation2d.fromDegrees(poseArray[5])
-        );
+        return getRobotPose();
     }
     
     /**
@@ -173,11 +236,7 @@ public class SimLimelightHelpers {
      * @return The robot's 2D pose in field space for the red alliance
      */
     public static Pose2d getBotPose2d_wpiRed(String limelightName) {
-        double[] poseArray = getBotPose_wpiRed(limelightName);
-        return new Pose2d(
-            new Translation2d(poseArray[0], poseArray[1]),
-            Rotation2d.fromDegrees(poseArray[5])
-        );
+        return getRobotPose();
     }
     
     /**
@@ -186,14 +245,10 @@ public class SimLimelightHelpers {
      * @return The robot's 3D pose in field space
      */
     public static Pose3d getBotPose3d(String limelightName) {
-        double[] poseArray = getBotPose(limelightName);
+        Pose2d pose2d = getRobotPose();
         return new Pose3d(
-            new Translation3d(poseArray[0], poseArray[1], poseArray[2]),
-            new Rotation3d(
-                Units.degreesToRadians(poseArray[3]),
-                Units.degreesToRadians(poseArray[4]),
-                Units.degreesToRadians(poseArray[5])
-            )
+            new Translation3d(pose2d.getX(), pose2d.getY(), CAMERA_Z),
+            new Rotation3d(0, 0, Units.degreesToRadians(pose2d.getRotation().getDegrees()))
         );
     }
     
@@ -207,11 +262,7 @@ public class SimLimelightHelpers {
             return new LimelightHelpers.PoseEstimate();
         }
         
-        double[] poseArray = getBotPose_wpiBlue(limelightName);
-        Pose2d pose = new Pose2d(
-            new Translation2d(poseArray[0], poseArray[1]),
-            Rotation2d.fromDegrees(poseArray[5])
-        );
+        Pose2d pose = getRobotPose();
         
         // Create a simulated pose estimate
         return new LimelightHelpers.PoseEstimate(
@@ -237,11 +288,7 @@ public class SimLimelightHelpers {
             return new LimelightHelpers.PoseEstimate();
         }
         
-        double[] poseArray = getBotPose_wpiBlue(limelightName);
-        Pose2d pose = new Pose2d(
-            new Translation2d(poseArray[0], poseArray[1]),
-            Rotation2d.fromDegrees(poseArray[5])
-        );
+        Pose2d pose = getRobotPose();
         
         // Create a simulated pose estimate
         return new LimelightHelpers.PoseEstimate(

@@ -104,6 +104,16 @@ public class RobotContainer {
         // Publish Field2d widget to SmartDashboard
         SmartDashboard.putData("Field", m_field);
         
+        // Add AprilTag targets to the field visualization
+        m_field.getObject("LeftReefTag").setPose(2.0, 2.0, Rotation2d.fromDegrees(0));
+        m_field.getObject("RightReefTag").setPose(2.0, -2.0, Rotation2d.fromDegrees(0));
+        m_field.getObject("HigherTag").setPose(3.0, 0.0, Rotation2d.fromDegrees(0));
+        
+        // Set the drivetrain reference in SimLimelightHelpers for simulation
+        if (Robot.isSimulation()) {
+            SimLimelightHelpers.setDrivetrain(drivetrain);
+        }
+        
         // Initialize the request objects
         pivotRequest = new MotionMagicVoltage(0)
             .withSlot(0)
