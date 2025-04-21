@@ -5,7 +5,6 @@ import com.ctre.phoenix6.controls.DutyCycleOut;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.hardware.TalonFX;
-import com.ctre.phoenix6.signals.NeutralModeValue;
 
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.ElevatorConstants;
@@ -24,7 +23,6 @@ public class Elevator extends SubsystemBase {
   private final TalonFX m_motor2 = new TalonFX(ElevatorConstants.kElevatorMotorID2, "ChooChooTrain");
   
   // Add Motion Magic control request
-  private int m_printCount = 0;
   private double INITIAL_OFFSET = 0;
   private boolean hasInitialized = false;
 
@@ -108,7 +106,6 @@ public class Elevator extends SubsystemBase {
     }
 
     double position = (m_motor1.getPosition().getValueAsDouble() - INITIAL_OFFSET) * -1;
-    double velocity = m_motor1.getVelocity().getValueAsDouble();
 
     // Update elevator mechanism visualization
     // Scale the position to a reasonable height for the visualization

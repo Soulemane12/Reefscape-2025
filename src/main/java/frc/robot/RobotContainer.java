@@ -96,8 +96,13 @@ public class RobotContainer {
     private final MotionMagicVoltage pivotRequest;
     private final MotionMagicVoltage elevatorRequest;
 
+    public final edu.wpi.first.wpilibj.smartdashboard.Field2d m_field = new edu.wpi.first.wpilibj.smartdashboard.Field2d();
+
     public RobotContainer() {
-        autoChooser = AutoBuilder.buildAutoChooser("Blue");
+        autoChooser = AutoBuilder.buildAutoChooser("Auto");
+        
+        // Publish Field2d widget to SmartDashboard
+        SmartDashboard.putData("Field", m_field);
         
         // Initialize the request objects
         pivotRequest = new MotionMagicVoltage(0)
