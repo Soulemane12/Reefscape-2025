@@ -96,23 +96,8 @@ public class RobotContainer {
     private final MotionMagicVoltage pivotRequest;
     private final MotionMagicVoltage elevatorRequest;
 
-    public final edu.wpi.first.wpilibj.smartdashboard.Field2d m_field = new edu.wpi.first.wpilibj.smartdashboard.Field2d();
-
     public RobotContainer() {
-        autoChooser = AutoBuilder.buildAutoChooser("Auto");
-        
-        // Publish Field2d widget to SmartDashboard
-        SmartDashboard.putData("Field", m_field);
-        
-        // Add AprilTag targets to the field visualization
-        m_field.getObject("LeftReefTag").setPose(2.0, 2.0, Rotation2d.fromDegrees(0));
-        m_field.getObject("RightReefTag").setPose(2.0, -2.0, Rotation2d.fromDegrees(0));
-        m_field.getObject("HigherTag").setPose(3.0, 0.0, Rotation2d.fromDegrees(0));
-        
-        // Set the drivetrain reference in SimLimelightHelpers for simulation
-        if (Robot.isSimulation()) {
-            SimLimelightHelpers.setDrivetrain(drivetrain);
-        }
+        autoChooser = AutoBuilder.buildAutoChooser("Blue");
         
         // Initialize the request objects
         pivotRequest = new MotionMagicVoltage(0)
@@ -233,20 +218,6 @@ public class RobotContainer {
             )
         );
 
-        // Add simulation-specific bindings for testing Limelight targets
-        if (Robot.isSimulation()) {
-            // Left bumper + A = show left reef tag
-            driver.leftBumper().and(driver.a()).onTrue(Commands.runOnce(() -> setSimulatedTarget(1)));
-            
-            // Left bumper + B = show right reef tag
-            driver.leftBumper().and(driver.b()).onTrue(Commands.runOnce(() -> setSimulatedTarget(2)));
-            
-            // Left bumper + Y = show higher tag
-            driver.leftBumper().and(driver.y()).onTrue(Commands.runOnce(() -> setSimulatedTarget(3)));
-            
-            // Left bumper + X = hide all tags
-            driver.leftBumper().and(driver.x()).onTrue(Commands.runOnce(() -> hideSimulatedTargets()));
-        }
 
         driver.a().whileTrue(drivetrain.applyRequest(() -> brake));
         driver.b().whileTrue(drivetrain.applyRequest(() ->
@@ -342,28 +313,5 @@ public class RobotContainer {
 
     public Command getAutonomousCommand() {
         return new PathPlannerAuto("Middle");
-    }
-    
-    /**
-     * Sets which target is visible in the simulated Limelight.
-     * This only works in simulation.
-     * 
-     * @param targetId The ID of the target to make visible (1 = left reef, 2 = right reef, 3 = higher tag)
-     */
-    public void setSimulatedTarget(int targetId) {
-        if (Robot.isSimulation()) {
-            SimLimelightHelpers.setTargetId(targetId);
-            SimLimelightHelpers.setTargetVisible(true);
-        }
-    }
-    
-    /**
-     * Makes all targets invisible in the simulated Limelight.
-     * This only works in simulation.
-     */
-    public void hideSimulatedTargets() {
-        if (Robot.isSimulation()) {
-            SimLimelightHelpers.setTargetVisible(false);
-        }
     }
 }
