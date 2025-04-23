@@ -43,30 +43,44 @@ public class AlignToReefTagRelative extends Command {
 
   @Override
   public void execute() {
-    if (LimelightHelpers.getTV("")) {
+    // Check if we can see a tag using Limelight
+    if (LimelightHelpers.getTV("limelight")) {
       this.dontSeeTagTimer.reset();
 
-      double[] positions = LimelightHelpers.getBotPose_TargetSpace("");
-     // SmartDashboard.putNumber("x", positions[2]);
+      // Get the robot pose relative to the tag
+      double[] positions = LimelightHelpers.getBotPose_TargetSpace("limelight");
+     
+      // Ensure we have valid data (especially in simulation)
+      if (positions != null && positions.length >= 6) {
+        // Calculate control outputs using PID controllers
+        double xSpeed = xController.calculate(positions[2]);
+        double ySpeed = -yController.calculate(positions[0]);
+        double rotValue = -rotController.calculate(positions[4]);
 
-      double xSpeed = xController.calculate(positions[2]);
-      double ySpeed = -yController.calculate(positions[0]);
-      double rotValue = -rotController.calculate(positions[4]);
+        // Limit the maximum speeds
+        xSpeed = Math.copySign(Math.min(Math.abs(xSpeed), 2.0), xSpeed);
+        ySpeed = Math.copySign(Math.min(Math.abs(ySpeed), 2.0), ySpeed);
+        rotValue = Math.copySign(Math.min(Math.abs(rotValue), 1.0), rotValue);
 
-      xSpeed = Math.copySign(Math.min(Math.abs(xSpeed), 2.0), xSpeed);
-      ySpeed = Math.copySign(Math.min(Math.abs(ySpeed), 2.0), ySpeed);
-      rotValue = Math.copySign(Math.min(Math.abs(rotValue), 1.0), rotValue);
+        // Apply the calculated speeds to the drivebase
+        drivebase.setControl(robotCentric.withVelocityX(xSpeed)
+                                      .withVelocityY(ySpeed)
+                                      .withRotationalRate(rotValue));
 
-      drivebase.setControl(robotCentric.withVelocityX(xSpeed)
-                                    .withVelocityY(ySpeed)
-                                    .withRotationalRate(rotValue));
-
-      if (!rotController.atSetpoint() ||
-          !yController.atSetpoint() ||
-          !xController.atSetpoint()) {
-        stopTimer.reset();
+        // Reset the stop timer if we're not at the setpoint
+        if (!rotController.atSetpoint() ||
+            !yController.atSetpoint() ||
+            !xController.atSetpoint()) {
+          stopTimer.reset();
+        }
+      } else {
+        // Handle invalid data (could happen in simulation)
+        drivebase.setControl(robotCentric.withVelocityX(0)
+                                      .withVelocityY(0)
+                                      .withRotationalRate(0));
       }
     } else {
+      // No tag visible, stop the robot
       drivebase.setControl(robotCentric.withVelocityX(0)
                                     .withVelocityY(0)
                                     .withRotationalRate(0));

@@ -12,6 +12,7 @@ import edu.wpi.first.net.PortForwarder;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import edu.wpi.first.wpilibj.Timer;
 
 public class Robot extends TimedRobot {
   private Command m_autonomousCommand;
@@ -66,6 +67,21 @@ public class Robot extends TimedRobot {
 
   @Override
   public void autonomousPeriodic() {
+
+    if (kUseLimelight) {
+      var driveState = m_robotContainer.drivetrain.getState();
+      double headingDeg = driveState.Pose.getRotation().getDegrees();
+      // Add 180 degrees to account for the camera being mounted at the front of the robot
+      double adjustedHeadingDeg = headingDeg + 180.0;
+      double omegaRps = Units.radiansToRotations(driveState.Speeds.omegaRadiansPerSecond);
+
+      LimelightHelpers.SetRobotOrientation("limelight", adjustedHeadingDeg, 0, -45, 0, 0, 0);
+      var llMeasurement = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2("limelight");
+      if (llMeasurement != null && llMeasurement.tagCount > 0 && Math.abs(omegaRps) < 2.0) {
+        m_robotContainer.drivetrain.addVisionMeasurement(llMeasurement.pose, llMeasurement.timestampSeconds);
+      }
+    }
+  
   }
 
   @Override
@@ -87,9 +103,11 @@ public class Robot extends TimedRobot {
     if (kUseLimelight) {
       var driveState = m_robotContainer.drivetrain.getState();
       double headingDeg = driveState.Pose.getRotation().getDegrees();
+      // Add 180 degrees to account for the camera being mounted at the front of the robot
+      double adjustedHeadingDeg = headingDeg + 180.0;
       double omegaRps = Units.radiansToRotations(driveState.Speeds.omegaRadiansPerSecond);
 
-      LimelightHelpers.SetRobotOrientation("limelight", headingDeg, 0, 0, 0, 0, 0);
+      LimelightHelpers.SetRobotOrientation("limelight", adjustedHeadingDeg, 0, -45, 0, 0, 0);
       var llMeasurement = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2("limelight");
       if (llMeasurement != null && llMeasurement.tagCount > 0 && Math.abs(omegaRps) < 2.0) {
         m_robotContainer.drivetrain.addVisionMeasurement(llMeasurement.pose, llMeasurement.timestampSeconds);
@@ -116,5 +134,69 @@ public class Robot extends TimedRobot {
 
   @Override
   public void simulationPeriodic() {
+    // Simulate Limelight data for auto alignment in simulation
+    if (kUseLimelight) {
+      // Get current robot state
+      var driveState = m_robotContainer.drivetrain.getState();
+      double headingDeg = driveState.Pose.getRotation().getDegrees();
+      // Add 180 degrees to account for the camera being mounted at the front of the robot
+      double adjustedHeadingDeg = headingDeg + 180.0;
+
+      // Update Limelight simulation data
+      LimelightHelpers.SetRobotOrientation("limelight", adjustedHeadingDeg, 0, -45, 0, 0, 0);
+      
+      // Simulate target visibility
+      var ntTable = LimelightHelpers.getLimelightNTTable("limelight");
+      ntTable.getEntry("tv").setDouble(1.0); // Set tv to 1 to simulate a visible target
+      
+      // Simulate target pose data
+      // Set a simulated pose in target space - x forward, y left, z up, roll, pitch, yaw
+      double[] targetSpacePose = {0.0, 0.0, -0.5, 0.0, 0.0, 0.0}; // Default value
+      ntTable.getEntry("botpose_targetspace").setDoubleArray(targetSpacePose);
+      
+      // Create simulated MegaTag pose data too
+      var pose = driveState.Pose;
+      var llMeasurement = new LimelightHelpers.PoseEstimate(
+          pose, // Use current robot pose
+          Timer.getFPGATimestamp(), // Current time
+          0.02, // Simulated latency
+          1, // Simulate seeing one tag
+          1.0, // Tag span
+          2.0, // Avg tag distance
+          0.2, // Avg tag area
+          new LimelightHelpers.RawFiducial[]{
+              new LimelightHelpers.RawFiducial(7, 0.0, 0.0, 0.2, 2.0, 2.0, 0.0)
+          },
+          true // Is MegaTag2
+      );
+      
+      // Add the simulated vision measurement to the drivetrain
+      m_robotContainer.drivetrain.addVisionMeasurement(llMeasurement.pose, llMeasurement.timestampSeconds);
+    }
+  }
+
+  @Override
+  public void simulationInit() {
+    // Initialize simulation-specific configurations
+    System.out.println("Simulation mode initialized");
+    
+    // Set up simulation-specific NetworkTable entries for Limelight
+    if (kUseLimelight) {
+      var limelightTable = LimelightHelpers.getLimelightNTTable("limelight");
+      
+      // Ensure the tv entry exists and is set to 1 (target visible)
+      limelightTable.getEntry("tv").setDouble(1.0);
+      
+      // Ensure basic pose entries exist for the simulation
+      double[] defaultPose = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+      limelightTable.getEntry("botpose").setDoubleArray(defaultPose);
+      limelightTable.getEntry("botpose_wpiblue").setDoubleArray(defaultPose);
+      limelightTable.getEntry("botpose_targetspace").setDoubleArray(defaultPose);
+      
+      // Set other necessary values
+      limelightTable.getEntry("botpose_tagcount").setDouble(1.0);
+      
+      System.out.println("Limelight simulation initialized in Robot class");
+    }
   }
 }

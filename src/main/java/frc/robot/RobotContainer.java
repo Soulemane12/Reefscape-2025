@@ -39,6 +39,10 @@ import frc.robot.commands.elevator.ElevatorPositionCommandBase;
 import frc.robot.Constants.PivotConstants;
 import frc.robot.commands.DriveToHigherTag;
 
+import com.ctre.phoenix6.Utils;
+import frc.robot.commands.SetupLimelightSimulation;
+import edu.wpi.first.wpilibj.RobotBase;
+
 public class RobotContainer {
 
     private double MaxSpeed = TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
@@ -121,6 +125,11 @@ public class RobotContainer {
         // Set elevator to "fake" zero position on robot init
         m_elevatorToPoint0Position.schedule();
         new PivotSetPositionCommand(m_Pivot, pivotRequest, PivotConstants.kPivotInPosition).schedule();
+
+        // Setup Limelight simulation data if in simulation mode
+        if (RobotBase.isSimulation()) {
+            new SetupLimelightSimulation().schedule();
+        }
 
         // Compute the adjusted setpoints with gravity compensation
         adjustedL2 = PivotConstants.kPivotL2Position + 
@@ -294,8 +303,10 @@ public class RobotContainer {
         
      
         // Right bumper for right reef alignment, left bumper for left reef alignment
+
         driver.rightBumper().whileTrue(new AlignToReefTagRelative(true, drivetrain));
         driver.leftBumper().whileTrue(new AlignToReefTagRelative(false, drivetrain));
+     
         
         // Y button for driving to and centering with a higher AprilTag
         driver.y().whileTrue(new DriveToHigherTag(drivetrain));
@@ -312,6 +323,6 @@ public class RobotContainer {
     }
 
     public Command getAutonomousCommand() {
-        return new PathPlannerAuto("Middle");
+        return new PathPlannerAuto("Auto");
     }
 }

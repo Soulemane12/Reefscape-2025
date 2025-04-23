@@ -74,10 +74,10 @@ public class DriveToHigherTag extends Command {
             return;
         }
 
-        if (LimelightHelpers.getTV("")) {
+        if (LimelightHelpers.getTV("limelight")) {
             this.dontSeeTagTimer.reset();
 
-            double[] positions = LimelightHelpers.getBotPose_TargetSpace("");
+            double[] positions = LimelightHelpers.getBotPose_TargetSpace("limelight");
             SmartDashboard.putNumber("x_to_tag", positions[2]);
             SmartDashboard.putNumber("y_to_tag", positions[0]);
             SmartDashboard.putNumber("rot_to_tag", positions[4]);
