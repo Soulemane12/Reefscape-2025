@@ -7,7 +7,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "Middle1"
+            "pathName": "Left"
           }
         },
         {
@@ -26,6 +26,18 @@
           "type": "path",
           "data": {
             "pathName": "LeftPickup_Back"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "alignToLeftReef"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "LeftPickup_Back_Back"
           }
         }
       ]
