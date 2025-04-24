@@ -25,8 +25,8 @@ public final class Constants {
 
     // Setpoints - These are the target positions relative to the AprilTag
     // You'll need to adjust these based on where you want the robot to stop
-    public static final double X_SETPOINT_REEF_ALIGNMENT = -0.1;  // Distance in front of tag (meters)
-    public static final double Y_SETPOINT_REEF_ALIGNMENT = 0.19;  // Side offset from tag (meters)
+    public static final double X_SETPOINT_REEF_ALIGNMENT = -0.25;  // Distance in front of tag (meters)
+    public static final double Y_SETPOINT_REEF_ALIGNMENT = 0.10;  // Side offset from tag (meters)
     public static final double ROT_SETPOINT_REEF_ALIGNMENT = 0;   // Angle relative to tag (degrees)
 
     // Tolerances - How close you need to be to consider it "aligned"
@@ -35,7 +35,7 @@ public final class Constants {
     public static final double ROT_TOLERANCE_REEF_ALIGNMENT = 0.5;  // Degrees
 
     // Timing constants
-    public static final double DONT_SEE_TAG_WAIT_TIME = 1;    // How long to wait before stopping if tag lost
+    public static final double DONT_SEE_TAG_WAIT_TIME = 0.01;    // How long to wait before stopping if tag lost
     public static final double POSE_VALIDATION_TIME = 0.3;    // How long to stay aligned before finishing
   }
 

@@ -15,6 +15,18 @@
           "data": {
             "name": "alignToRightReef"
           }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Left_Pickup"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "LeftPickup_Back"
+          }
         }
       ]
     }

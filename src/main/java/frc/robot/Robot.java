@@ -29,6 +29,16 @@ public class Robot extends TimedRobot {
   
   @Override
   public void robotInit() {
+    // Set Limelight camera position relative to robot center
+    LimelightHelpers.setCameraPose_RobotSpace(
+      "limelight",
+      0.35,   // forward (m)
+      0.0,    // side    (m)
+      -0.15,   // up      (m)
+      0.0,    // roll    (°)
+      0.0,    // pitch   (°)
+      0.0     // yaw     (°)
+    );
 
     PathfindingCommand.warmupCommand().schedule();
   }
@@ -136,6 +146,16 @@ public class Robot extends TimedRobot {
   public void simulationPeriodic() {
     // Simulate Limelight data for auto alignment in simulation
     if (kUseLimelight) {
+
+      LimelightHelpers.setCameraPose_RobotSpace(
+      "limelight",
+      0.35,   // forward (m)
+      0.0,    // side    (m)
+      -0.15,   // up      (m)
+      0.0,    // roll    (°)
+      0.0,    // pitch   (°)
+      0.0     // yaw     (°)
+    );
       // Get current robot state
       var driveState = m_robotContainer.drivetrain.getState();
       double headingDeg = driveState.Pose.getRotation().getDegrees();
@@ -182,6 +202,16 @@ public class Robot extends TimedRobot {
     
     // Set up simulation-specific NetworkTable entries for Limelight
     if (kUseLimelight) {
+
+      LimelightHelpers.setCameraPose_RobotSpace(
+      "limelight",
+      0.35,   // forward (m)
+      0.0,    // side    (m)
+      -0.15,   // up      (m)
+      0.0,    // roll    (°)
+      0.0,    // pitch   (°)
+      0.0     // yaw     (°)
+    );
       var limelightTable = LimelightHelpers.getLimelightNTTable("limelight");
       
       // Ensure the tv entry exists and is set to 1 (target visible)
