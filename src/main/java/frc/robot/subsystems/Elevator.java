@@ -39,13 +39,20 @@ public class Elevator extends SubsystemBase {
   private final ShuffleboardTab m_elevatorTab;
   
   // 2D Mechanism for visualizing elevator
-  private final Mechanism2d m_elevatorMechanism = new Mechanism2d(3, 3);
-  private final MechanismRoot2d m_elevatorRoot = m_elevatorMechanism.getRoot("ElevatorRoot", 1.5, 0.5);
+  private final Mechanism2d m_elevatorMechanism = new Mechanism2d(
+      /*width (robot half-width)*/  1.0,
+      /*height (max lift)*/         2.0
+  );
+  private final MechanismRoot2d m_elevatorRoot = m_elevatorMechanism.getRoot(
+      "ElevatorRoot",
+      /*x (slightly back from front)*/ 0.65,
+      /*y (floor level)*/             0.0
+  );
   private final MechanismLigament2d m_elevatorStage = m_elevatorRoot.append(
       new MechanismLigament2d("ElevatorStage", 0.5, 90, 6, new Color8Bit(Color.kYellow)));
   
   // Maximum height of elevator for visualization scaling
-  private static final double MAX_ELEVATOR_HEIGHT = 2.0; // Adjust based on your elevator's range
+  private static final double MAX_ELEVATOR_HEIGHT = 2.0; // Maximum height in meters
 
   public Elevator() {
     // Configure both motors
