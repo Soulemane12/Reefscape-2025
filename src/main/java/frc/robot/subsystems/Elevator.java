@@ -5,6 +5,8 @@ import com.ctre.phoenix6.controls.DutyCycleOut;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.sim.TalonFXSimState;
+import edu.wpi.first.wpilibj.RobotController;
 
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.ElevatorConstants;
@@ -17,10 +19,18 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
 
+
 public class Elevator extends SubsystemBase {
   // Two motors for the elevator drive.
   private final TalonFX m_motor1 = new TalonFX(ElevatorConstants.kElevatorMotorID1, "ChooChooTrain");
   private final TalonFX m_motor2 = new TalonFX(ElevatorConstants.kElevatorMotorID2, "ChooChooTrain");
+  
+  // Add simulation states
+  private final TalonFXSimState m_sim1 = m_motor1.getSimState();
+  private final TalonFXSimState m_sim2 = m_motor2.getSimState();
+  
+  // Simulation constants
+  private static final double kElevatorSimScale = 1; // Increased from 0.1 to make movement faster
   
   // Add Motion Magic control request
   private double INITIAL_OFFSET = 0;
@@ -141,4 +151,19 @@ public class Elevator extends SubsystemBase {
   public double getPosition() {
     return (m_motor1.getPosition().getValueAsDouble() - INITIAL_OFFSET) * -1;
 }
+
+  @Override
+  public void simulationPeriodic() {
+    // First, give the sim your battery voltage so current and physics behave:
+    double batteryV = RobotController.getBatteryVoltage();
+    m_sim1.setSupplyVoltage(batteryV);
+    m_sim2.setSupplyVoltage(batteryV);
+
+    // Then "drive" the sim state by adding rotor rotations proportional to your percent output:
+    double pctOut = m_motor1.get();   // get() is the current percent output (-1 to +1)
+    // scale it into "rotations per 20 ms" or however fast you want:
+    double deltaRot = pctOut * kElevatorSimScale;  
+    m_sim1.addRotorPosition(deltaRot);
+    m_sim2.addRotorPosition(deltaRot);
+  }
 }

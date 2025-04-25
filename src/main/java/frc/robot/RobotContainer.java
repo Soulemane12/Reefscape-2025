@@ -323,6 +323,6 @@ public class RobotContainer {
     }
 
     public Command getAutonomousCommand() {
-        return new PathPlannerAuto("Auto");
+        return new PathPlannerAuto("Middle");
     }
 }
