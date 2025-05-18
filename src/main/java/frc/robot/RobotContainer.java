@@ -12,8 +12,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.RunCommand;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
+
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 
@@ -27,7 +26,6 @@ import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 //import frc.robot.commands.elevator.ElevatorJoystickCommand;
 import frc.robot.commands.position.PivotSetPositionCommand;
-import frc.robot.commands.position.PositionJoystickCommand;
 import frc.robot.commands.elevator.ElevatorToL2Position;
 import frc.robot.commands.elevator.ElevatorToL3Position;
 import frc.robot.commands.elevator.ElevatorToL4Position;
@@ -38,10 +36,6 @@ import frc.robot.commands.AlignToReefTagRelative;
 import frc.robot.commands.elevator.ElevatorPositionCommandBase;
 import frc.robot.Constants.PivotConstants;
 import frc.robot.commands.DriveToHigherTag;
-
-import com.ctre.phoenix6.Utils;
-import frc.robot.commands.SetupLimelightSimulation;
-import edu.wpi.first.wpilibj.RobotBase;
 
 public class RobotContainer {
 
@@ -69,7 +63,6 @@ public class RobotContainer {
     private final Climber m_climber = new Climber();
 
     private final MotionMagicVoltage m_request = new MotionMagicVoltage(0);
-    private final double kElevatorGravityCompensation = 0.04;
     private final double kPositionGravityCompensation = -0.6; // Increased gravity compensation
 
     // Add adjusted position variables as class fields
@@ -125,11 +118,6 @@ public class RobotContainer {
         // Set elevator to "fake" zero position on robot init
         m_elevatorToPoint0Position.schedule();
         new PivotSetPositionCommand(m_Pivot, pivotRequest, PivotConstants.kPivotInPosition).schedule();
-
-        // Setup Limelight simulation data if in simulation mode
-        if (RobotBase.isSimulation()) {
-            new SetupLimelightSimulation().schedule();
-        }
 
         // Compute the adjusted setpoints with gravity compensation
         adjustedL2 = PivotConstants.kPivotL2Position + 
@@ -303,10 +291,8 @@ public class RobotContainer {
         
      
         // Right bumper for right reef alignment, left bumper for left reef alignment
-
         driver.rightBumper().whileTrue(new AlignToReefTagRelative(true, drivetrain));
         driver.leftBumper().whileTrue(new AlignToReefTagRelative(false, drivetrain));
-     
         
         // Y button for driving to and centering with a higher AprilTag
         driver.y().whileTrue(new DriveToHigherTag(drivetrain));

@@ -39,6 +39,18 @@
           "data": {
             "pathName": "LeftPickup_Back_Back"
           }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "LeftPickup_Back"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "alignToLeftReef"
+          }
         }
       ]
     }

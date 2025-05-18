@@ -11,6 +11,12 @@
           }
         },
         {
+          "type": "named",
+          "data": {
+            "name": "alignToLeftReef"
+          }
+        },
+        {
           "type": "wait",
           "data": {
             "waitTime": 0.5
